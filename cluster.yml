@@ -1,4 +1,9 @@
 - hosts: all
+  vars:
+    version_docker: "17.09.0*"
+    version_kubernetes: "1.8.10*"
+    version_kubernetes_cni: "0.5.1*"
+
   roles:
     - common
     - kubeadm

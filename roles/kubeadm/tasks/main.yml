@@ -5,6 +5,12 @@
 - name: Disable Swap
   shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
 
+- name: Determine if Kubernetes is installed
+  stat:
+    path: /usr/bin/kubeadm
+  register: kube_there
+  ignore_errors: True
+
 # Docker Convenience Script Can Only Be Run Once
 - name: Determine if docker is installed
   stat:
@@ -13,8 +19,8 @@
   ignore_errors: True
 
 # https://docs.docker.com/engine/installation/linux/docker-ce/debian/#install-using-the-convenience-script
-- name: Run Docker Install Script
-  script: files/get-docker.sh
+- name: Run Docker Install Script online
+  shell: wget -qO- https://get.docker.com/ | sed 's/docker-ce/docker-ce={{ version_docker }}/' | sh
   when: docker_there.stat.exists == False
 
 # https://kubernetes.io/docs/setup/independent/install-kubeadm/
@@ -40,10 +46,17 @@
     autoclean: yes
     autoremove: yes
 
+- name: Install kubernetes-cni
+  apt:
+    name: "{{ item }}={{ version_kubernetes_cni }}"
+    state: present
+  with_items:
+    - kubernetes-cni
+
 - name: Install k8s Y'all
   apt:
-    name: "{{ item }}"
-    state: latest
+    name: "{{ item }}={{ version_kubernetes }}"
+    state: present
   with_items:
     - kubelet
     - kubeadm
